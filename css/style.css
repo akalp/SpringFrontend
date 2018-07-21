@@ -1,0 +1,15 @@
+.hovered {
+  fill: green;
+  background-color: green;
+}
+
+.select2-search__field {
+  padding: .375rem .75rem;
+}
+
+.buttons {
+  margin: .5rem .25rem;
+  width: 45%;
+  font-size: .75rem;
+  border-radius: 0
+}
