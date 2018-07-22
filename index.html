@@ -4,6 +4,8 @@
   <title>Intern Wordnet</title>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" href="http://via.placeholder.com/100/000/000">
+
   <link rel="stylesheet" href="lib/bootstrap/bootstrap.min.css">
   <link rel="stylesheet" href="lib/select2/select2.min.css">
   <link rel="stylesheet" href="lib/select2/select2-bootstrap4.min.css">
@@ -24,7 +26,7 @@
             <label for="source-languages">Source Languages</label>
             <select id="source-languages" placeholder="Source Languages" style="width: 100%" multiple="multiple">
             </select>
-            </div>
+          </div>
           <div class="col-3 mx-2">
             <label for="target-languages">Target Languages</label>
             <select id="target-languages" placeholder="Target Languages" style="width: 100%" multiple="multiple">
@@ -35,27 +37,48 @@
     </div>
 
     <div class="row">
-      <div class="col-7 border mx-4">
+      <div class="col-7 mx-4">
         <div id="graph" class="py-2">
-          <svg height=80% width=100%>
-            <circle w_id="test" cx="250" cy="250" r="10"></circle>
-            <circle w_id="test2" cx="500" cy="250" r="10"></circle>
-          </svg>
+          <svg class="border" height=80% width=100%></svg>
         </div>
       </div>
-      <div class="col-4 border mx-2">
+      <div id="definitions" class="col-4 border mx-2">
         <div class="py-3">
           <p class="bg-info text-white font-italic font-weight-bold text-center" id="searched-word">Test</p>
-          <table id="noun-definitions" class="table border">
-            <thead>
+          <table id="Noun-definitions" class="table border">
+            <thead data-toggle="collapse" data-target="#nouns" class="clickable">
               <tr>
                 <th>Noun</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody id="nouns" class="collapse">
+            </tbody>
+          </table>
+          <table id="Verb-definitions" class="table border">
+            <thead data-toggle="collapse" data-target="#verbs" class="clickable">
               <tr>
-                <td w_id="test">Test</td>
+                <th>Verb</th>
               </tr>
+            </thead>
+            <tbody  id="verbs" class="collapse">
+            </tbody>
+          </table>
+          <table id="Adjective-definitions" class="table border">
+            <thead data-toggle="collapse" data-target="#adjectives" class="clickable">
+              <tr>
+                <th>Adjective</th>
+              </tr>
+            </thead>
+            <tbody  id="adjectives" class="collapse">
+            </tbody>
+          </table>
+          <table id="Adverb-definitions" class="table border">
+            <thead data-toggle="collapse" data-target="#adverbs" class="clickable">
+              <tr>
+                <th>Adverb</th>
+              </tr>
+            </thead>
+            <tbody  id="adverbs" class="collapse">
             </tbody>
           </table>
         </div>
@@ -65,8 +88,250 @@
 
   <script src="lib/jquery/jquery-3.3.1.min.js"></script>
   <script src="lib/bootstrap/bootstrap.bundle.min.js"></script>
-  <script src="lib/select2/select2.full.min.js" charset="utf-8"></script>
-  <script src="js/script.js" charset="utf-8"></script>
+  <script src="lib/d3/d3.min.js"></script>
+  <script src="lib/select2/select2.full.min.js"></script>
+  <script type="text/javascript">
+    //d3js
+    var svg = d3.select("#graph > svg").attr("pointer-events", "all").attr("preserveAspectRatio", "xMinYMin meet");
+    var definitions = d3.select("#definitions");
+
+    var width = $("#graph svg").width();
+    var height = $("#graph svg").height();
+
+    // svg objects
+    var link, node;
+    // the data - an object with nodes and links
+    var graph;
+
+    // load the data
+    d3.json("http://localhost:8080/demo_data/graph.json").then(function(_graph) {
+      if (!_graph) return;
+      graph = _graph;
+      initializeDisplay();
+      initializeSimulation();
+    });
+
+    //////////// FORCE SIMULATION ////////////
+
+    // force simulator
+    var simulation = d3.forceSimulation();
+
+    // set up the simulation and event to update locations after each tick
+    function initializeSimulation() {
+      simulation.nodes(graph.nodes);
+      start();
+      initializeForces();
+      simulation.on("tick", ticked);
+    }
+
+    // values for all forces
+    forceProperties = {
+      center: {
+        x: 0.5,
+        y: 0.5
+      },
+      charge: {
+        enabled: true,
+        strength: -50,
+        distanceMin: 1,
+        distanceMax: 1000
+      },
+      collide: {
+        enabled: true,
+        strength: .5,
+        iterations: 1,
+        radius: 5
+      },
+      forceX: {
+        enabled: true,
+        strength: .2,
+        x: .5
+      },
+      forceY: {
+        enabled: true,
+        strength: .2,
+        y: .5
+      },
+      link: {
+        enabled: true,
+        distance: 50,
+        iterations: 1
+      }
+    }
+
+    // add forces to the simulation
+    function initializeForces() {
+      // add forces and associate each with a name
+      simulation
+        .force("link", d3.forceLink())
+        .force("charge", d3.forceManyBody())
+        .force("collide", d3.forceCollide())
+        .force("center", d3.forceCenter())
+        .force("forceX", d3.forceX())
+        .force("forceY", d3.forceY());
+      // apply properties to each of the forces
+      updateForces();
+    }
+
+    // apply new force properties
+    function updateForces() {
+      // get each force by name and update the properties
+      simulation.force("center")
+        .x(width * forceProperties.center.x)
+        .y(height * forceProperties.center.y);
+      simulation.force("charge")
+        .strength(forceProperties.charge.strength * forceProperties.charge.enabled)
+        .distanceMin(forceProperties.charge.distanceMin)
+        .distanceMax(forceProperties.charge.distanceMax);
+      simulation.force("collide")
+        .strength(forceProperties.collide.strength * forceProperties.collide.enabled)
+        .radius(forceProperties.collide.radius)
+        .iterations(forceProperties.collide.iterations);
+      simulation.force("forceX")
+        .strength(forceProperties.forceX.strength * forceProperties.forceX.enabled)
+        .x(width * forceProperties.forceX.x);
+      simulation.force("forceY")
+        .strength(forceProperties.forceY.strength * forceProperties.forceY.enabled)
+        .y(height * forceProperties.forceY.y);
+      simulation.force("link")
+        .id(function(d) {
+          return d.index;
+        })
+        .distance(forceProperties.link.distance)
+        .iterations(forceProperties.link.iterations)
+        .links(forceProperties.link.enabled ? graph.links : []);
+
+      // updates ignored until this is run
+      // restarts the simulation (important if simulation has already slowed down)
+      simulation.alpha(1).restart();
+    }
+
+    //////////// DISPLAY ////////////
+
+    // generate the svg objects and force simulation
+    function initializeDisplay() {
+      svg.style("visibility", "visible");
+      definitions.style("visibility", "visible");
+      // set the data and properties of link lines
+      link = svg.append("g")
+        .attr("class", "links")
+        .selectAll(".link")
+        .data(graph.links).enter()
+        .append("path")
+        .attr("class", function(d) {
+          return "link " + d.type;
+        });
+
+      // set the data and properties of node circles
+      node = svg.append("g")
+        .attr("class", "nodes")
+        .selectAll(".node")
+        .data(graph.nodes).enter()
+        .append("g")
+        .attr("class", "node")
+        .attr("w_id", function(d){if(d.synsetID) return d.synsetID})
+        .call(d3.drag()
+          .on("start", dragstarted)
+          .on("drag", dragged)
+          .on("end", dragended));
+
+      node.append("circle")
+        .attr("class", function(d) {
+          return d.type
+        })
+        .attr("r", forceProperties.collide.radius);
+
+      node.append("text")
+        .attr("class", "word-name")
+        .attr("dx", 12)
+        .attr("dy", 2)
+        .text(function(d) {
+          return d.word
+        });
+    }
+
+    // update the display positions after each simulation tick
+    function ticked() {
+      link.attr("d", function(d) {
+        var dx = d.target.x - d.source.x,
+          dy = d.target.y - d.source.y,
+          dr = Math.sqrt(dx * dx + dy * dy);
+
+        return [
+          "M", d.source.x, d.source.y,
+          "A", dr, dr, 0, 0, 1, d.target.x, d.target.y
+        ].join(" ");
+      });
+
+      node.attr("transform", function(d) {
+        return "translate(" + d.x + "," + d.y + ")";
+      });
+      d3.select('#alpha_value').style('flex-basis', (simulation.alpha() * 100) + '%');
+    }
+    //////////// UI EVENTS ////////////
+
+    function dragstarted(d) {
+      if (!d3.event.active) simulation.alphaTarget(0.3).restart();
+      d.fx = d.x;
+      d.fy = d.y;
+    }
+
+    function dragged(d) {
+      d.fx = d3.event.x;
+      d.fy = d3.event.y;
+    }
+
+    function dragended(d) {
+      if (!d3.event.active) simulation.alphaTarget(0.0001);
+      d.fx = null;
+      d.fy = null;
+    }
+
+    // update size-related forces
+    d3.select(window).on("resize", function() {
+      width = +svg.node().getBoundingClientRect().width;
+      height = +svg.node().getBoundingClientRect().height;
+      updateForces();
+    });
+
+    //lanugages
+    var languages = new Set();
+    function initializeLanguages(){
+    graph.nodes.forEach(function(d){
+      languages.add(d.lang);
+    }); //TO DO add langs to search
+  }
+
+  //definitions
+  function initializeDefinitions(){
+    graph.nodes.forEach(function(d){
+      definitions.select('#'+d.type+'-definitions')
+      .select("tbody")
+      .append('tr')
+      .append('td')
+      .attr("w_id", function(){if(d.synsetID) return d.synsetID})
+      .text(d.definition);
+    })
+  }
+
+  function start(){
+
+    initializeLanguages();
+    initializeDefinitions();
+
+    //Hover Coloring
+    $(".node, td").hover(
+      function() {
+        console.log("!");
+        $("[w_id=" + $(this).attr('w_id') + "]").addClass("hovered");
+      },
+      function() {
+        $("[w_id=" + $(this).attr('w_id') + "]").removeClass("hovered");
+      });
+  }
+  </script>
+  <script src="http://localhost:8080/js/script.js"></script>
+
 
 </body>
 
