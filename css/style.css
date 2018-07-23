@@ -26,19 +26,23 @@ g.node .Word {
     fill: darkgrey;
 }
 
-g.node .Noun {
+#Noun-definitions>thead, g.node .Noun {
+    background-color: greenyellow;
     fill: greenyellow;
 }
 
-g.node .Verb {
+#Verb-definitions>thead, g.node .Verb {
+    background-color: aqua;
     fill: aqua;
+
+  }
+#Adverb-definitions>thead, g.node .Adverb {
+    background-color: #b42e2e;
+    fill: #b42e2e;
 }
 
-g.node .Adverb {
-    fill: darkred;
-}
-
-g.node .Adjective {
+#Adjective-definitions>thead, g.node .Adjective {
+    background-color: darkseagreen;
     fill: darkseagreen;
 }
 
@@ -53,6 +57,7 @@ g.node.hovered > circle{
 
 .select2-search__field {
   padding: .375rem .75rem;
+  width: 100% !important;
 }
 
 .buttons {
@@ -62,7 +67,12 @@ g.node.hovered > circle{
   border-radius: 0;
 }
 
-#definitions, #graph>svg {
+.search {
+  margin: .75rem 0;
+  padding: 1rem 1rem;
+}
+
+#alt-row {
   visibility: hidden;
 }
 
