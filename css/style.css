@@ -1,3 +1,7 @@
+path.link {
+    fill: none;
+}
+
 path.link.Hypernym {
     stroke: blue;
 }
@@ -26,22 +30,22 @@ g.node .Word {
     fill: darkgrey;
 }
 
-#Noun-definitions>thead, g.node .Noun {
+#Noun-definitions, g.node .Noun {
     background-color: greenyellow;
     fill: greenyellow;
 }
 
-#Verb-definitions>thead, g.node .Verb {
+#Verb-definitions, g.node .Verb {
     background-color: aqua;
     fill: aqua;
 
   }
-#Adverb-definitions>thead, g.node .Adverb {
+#Adverb-definitions, g.node .Adverb {
     background-color: #b42e2e;
     fill: #b42e2e;
 }
 
-#Adjective-definitions>thead, g.node .Adjective {
+#Adjective-definitions, g.node .Adjective {
     background-color: darkseagreen;
     fill: darkseagreen;
 }
@@ -80,6 +84,7 @@ g.node.hovered > circle{
     font: 10px sans-serif;
 }
 
-path.link {
-    fill: none;
+
+#searched-word {
+    padding: .25rem 0;
 }
